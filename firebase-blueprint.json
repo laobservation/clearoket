@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "user": {
+      "title": "User Account",
+      "description": "Base authenticated user profile storing identity and system role.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 254 },
+        "name": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "MERCHANT", "AFFILIATE", "SELLER", "PROMOTER"] },
+        "phone": { "type": "string", "maxLength": 32 },
+        "avatarUrl": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "email", "name", "role", "createdAt"]
+    },
+    "merchant": {
+      "title": "Merchant Profile",
+      "description": "Merchant e-commerce store profile with commission configurations and settings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 120 },
+        "companyName": { "type": "string", "maxLength": 120 },
+        "website": { "type": "string", "maxLength": 512 },
+        "city": { "type": "string", "maxLength": 80 },
+        "category": { "type": "string", "maxLength": 80 },
+        "supportPhone": { "type": "string", "maxLength": 32 },
+        "logoUrl": { "type": "string", "maxLength": 2048 },
+        "defaultPayoutMAD": { "type": "number" },
+        "holdPeriodHours": { "type": "number" },
+        "platformType": { "type": "string", "maxLength": 50 },
+        "pixelApiKey": { "type": "string", "maxLength": 128 },
+        "integrationSecretKey": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["ACTIVE", "PENDING_APPROVAL", "REJECTED"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "storeName", "category", "city"]
+    },
+    "affiliate": {
+      "title": "Affiliate Profile",
+      "description": "Creator or promoter affiliate account details, bank RIB, and social handles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 254 },
+        "niche": { "type": "string", "maxLength": 100 },
+        "avatarUrl": { "type": "string", "maxLength": 2048 },
+        "socialHandle": { "type": "string", "maxLength": 80 },
+        "instagramHandle": { "type": "string", "maxLength": 80 },
+        "tiktokHandle": { "type": "string", "maxLength": 80 },
+        "youtubeChannel": { "type": "string", "maxLength": 120 },
+        "whatsappNumber": { "type": "string", "maxLength": 32 },
+        "bankName": { "type": "string", "maxLength": 100 },
+        "bankRib": { "type": "string", "maxLength": 40 },
+        "accountHolderName": { "type": "string", "maxLength": 120 },
+        "walletBalanceMAD": { "type": "number" },
+        "availableBalanceMAD": { "type": "number" },
+        "pendingCommissionMAD": { "type": "number" },
+        "lifetimePaidMAD": { "type": "number" },
+        "totalEarnedMAD": { "type": "number" },
+        "tier": { "type": "string", "enum": ["Starter", "Verified Pro", "Elite Partner"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "fullName"]
+    },
+    "campaign": {
+      "title": "Campaign",
+      "description": "Affiliate marketing campaign offered by a merchant.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "merchantId": { "type": "string", "maxLength": 128 },
+        "merchantName": { "type": "string", "maxLength": 120 },
+        "title": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "commissionType": { "type": "string", "enum": ["PERCENTAGE", "FIXED_MAD", "RECURRING"] },
+        "commissionRate": { "type": "string", "maxLength": 50 },
+        "cookieDuration": { "type": "number" },
+        "category": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED", "ARCHIVED"] },
+        "totalClicks": { "type": "number" },
+        "totalConversions": { "type": "number" },
+        "totalPaidOutMAD": { "type": "number" },
+        "terms": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "merchantId", "title", "commissionType", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Stores user system records keyed by Firebase Auth UID or user ID."
+    },
+    "/merchants/{merchantId}": {
+      "schema": "merchant",
+      "description": "Stores merchant store profiles, integration keys, and settings."
+    },
+    "/affiliates/{affiliateId}": {
+      "schema": "affiliate",
+      "description": "Stores affiliate promoter profiles, bank RIB details, and wallet statistics."
+    },
+    "/campaigns/{campaignId}": {
+      "schema": "campaign",
+      "description": "Stores active and paused affiliate campaigns."
+    }
+  }
+}

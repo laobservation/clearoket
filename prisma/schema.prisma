@@ -1,0 +1,231 @@
+// Prisma Schema for Kickit.ma - Moroccan Localized Performance Marketing SaaS Platform
+// Datasource: PostgreSQL
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MERCHANT
+  AFFILIATE
+}
+
+enum TrackingStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  REJECTED
+}
+
+enum CommissionType {
+  PERCENTAGE
+  FIXED_MAD
+  RECURRING
+}
+
+enum PlatformType {
+  YOUCAN
+  SHOPIFY
+  WOOCOMMERCE
+  CUSTOM_API
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  passwordHash     String
+  name             String
+  role             UserRole          @default(AFFILIATE)
+  phone            String?
+  avatarUrl        String?
+  merchantProfile  MerchantProfile?
+  affiliateProfile AffiliateProfile?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([email])
+}
+
+model MerchantProfile {
+  id                   String       @id @default(uuid())
+  userId               String       @unique
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName          String
+  slug                 String       @unique
+  logoUrl              String?
+  category             String
+  website              String
+  city                 String       @default("Casablanca")
+  platformType         PlatformType @default(YOUCAN)
+  integrationSecretKey String       @unique
+  webhookUrl           String?
+  isApproved           Boolean      @default(false)
+  campaigns            Campaign[]
+  conversions          Conversion[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([slug])
+  @@index([integrationSecretKey])
+}
+
+model AffiliateProfile {
+  id                  String          @id @default(uuid())
+  userId              String          @unique
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName            String
+  instagramHandle     String?
+  tiktokHandle        String?
+  youtubeChannel      String?
+  whatsappNumber      String?
+  bankName            String          @default("CIH Bank")
+  bankRib             String          // 24-digit Moroccan RIB (Relevé d'Identité Bancaire)
+  accountHolderName   String
+  walletBalanceMAD    Decimal         @default(0.00) @db.Decimal(12, 2)
+  pendingCommissionMAD Decimal        @default(0.00) @db.Decimal(12, 2)
+  lifetimePaidMAD     Decimal         @default(0.00) @db.Decimal(12, 2)
+  affiliateLinks      AffiliateLink[]
+  promoCodes          PromoCode[]
+  conversions         Conversion[]
+  payoutRequests      PayoutRequest[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([bankRib])
+}
+
+model Campaign {
+  id             String          @id @default(uuid())
+  merchantId     String
+  merchant       MerchantProfile @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  commissionType CommissionType  @default(PERCENTAGE)
+  commissionValue Decimal        @db.Decimal(10, 2) // e.g. 15.00 for 15% or 150.00 MAD
+  cookieDuration Int             @default(30)       // in days
+  category       String
+  isActive       Boolean         @default(true)
+  affiliateLinks AffiliateLink[]
+  promoCodes     PromoCode[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([merchantId])
+}
+
+model AffiliateLink {
+  id               String           @id @default(uuid())
+  affiliateId      String
+  affiliate        AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  campaignId       String
+  campaign         Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  shortCode        String           @unique
+  targetUrl        String
+  channel          String           @default("Instagram")
+  clicksCount      Int              @default(0)
+  conversionsCount Int              @default(0)
+  clicks           Click[]
+  conversions      Conversion[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([shortCode])
+  @@index([affiliateId])
+}
+
+model PromoCode {
+  id                      String           @id @default(uuid())
+  affiliateId             String
+  affiliate               AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  campaignId              String
+  campaign                Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  code                    String           @unique
+  discountPercentage      Decimal          @db.Decimal(5, 2)
+  affiliateCommissionRate Decimal          @db.Decimal(5, 2)
+  usesCount               Int              @default(0)
+  totalVolumeMAD          Decimal          @default(0.00) @db.Decimal(12, 2)
+  isActive                Boolean          @default(true)
+  conversions             Conversion[]
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@index([code])
+}
+
+model Click {
+  id              String         @id @default(uuid())
+  affiliateLinkId String
+  affiliateLink   AffiliateLink  @relation(fields: [affiliateLinkId], references: [id], onDelete: Cascade)
+  ipAddress       String
+  city            String?        // e.g. "Casablanca", "Rabat", "Marrakech"
+  userAgent       String?
+  referrer        String?
+  isFraudSuspect  Boolean        @default(false)
+  conversions     Conversion[]
+  createdAt       DateTime       @default(now())
+
+  @@index([affiliateLinkId])
+  @@index([ipAddress])
+}
+
+model Conversion {
+  id              String           @id @default(uuid())
+  orderNumber     String           // Merchant webstore order reference (e.g. #MA-9824)
+  merchantId      String
+  merchant        MerchantProfile  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  affiliateId     String
+  affiliate       AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliateLinkId String?
+  affiliateLink   AffiliateLink?   @relation(fields: [affiliateLinkId], references: [id])
+  promoCodeId     String?
+  promoCode       PromoCode?       @relation(fields: [promoCodeId], references: [id])
+  clickId         String?
+  click           Click?           @relation(fields: [clickId], references: [id])
+  orderAmountMAD  Decimal          @db.Decimal(12, 2)
+  commissionMAD   Decimal          @db.Decimal(12, 2)
+  saasCutMAD      Decimal          @db.Decimal(12, 2) // Kickit SaaS platform fee
+  status          TrackingStatus   @default(PENDING)  // Advances to DELIVERED via Courier COD Webhook
+  customerCity    String?
+  courierName     String?          // "Amana Express", "Cathedis", "Aramex", "Sendit"
+  trackingNumber  String?
+  deliveredAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([orderNumber])
+  @@index([merchantId])
+  @@index([affiliateId])
+  @@index([status])
+}
+
+model PayoutRequest {
+  id                   String           @id @default(uuid())
+  affiliateId          String
+  affiliate            AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  amountMAD            Decimal          @db.Decimal(12, 2)
+  bankName             String           // e.g. "CIH Bank", "Attijariwafa Bank"
+  bankRib              String           // 24-digit Bank Account RIB
+  status               PayoutStatus     @default(PENDING)
+  transactionReference String?
+  requestedAt          DateTime         @default(now())
+  processedAt          DateTime?
+  rejectionReason      String?
+
+  @@index([affiliateId])
+  @@index([status])
+}

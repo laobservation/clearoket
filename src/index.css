@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  [dir="rtl"], [dir="rtl"] body {
+    font-family: 'Cairo', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  h1, h2, h3, .font-heading {
+    letter-spacing: -0.025em;
+  }
+
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] .font-heading {
+    letter-spacing: 0;
+  }
+}
+
+/* Custom glow and radial gradients matching the design */
+.hero-glow-bg {
+  background: radial-gradient(circle at 50% 10%, rgba(219, 234, 254, 0.7) 0%, rgba(238, 242, 255, 0.4) 40%, rgba(248, 250, 252, 0.1) 70%);
+}
+
+.hero-orbital-ring {
+  border: 1px solid rgba(191, 219, 254, 0.4);
+  border-radius: 9999px;
+}
+
+.card-glow-subtle {
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+}
+
+.card-glow-hover:hover {
+  box-shadow: 0 12px 30px -4px rgba(37, 99, 235, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Custom scrollbar for data tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+

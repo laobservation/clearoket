@@ -1,0 +1,8 @@
+{
+  "name": "Remix RoketLead | Moroccan Affiliate \u0026 Performance Marketing Platform",
+  "description": "B2B performance marketing and localized affiliate management platform for Moroccan e-commerce, Cash on Delivery (COD) brands, and digital creators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

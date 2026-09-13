@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'mobapps29@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isSignedIn() && request.auth.uid == userId;
+      allow update: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Merchants collection (Public registration with PENDING_APPROVAL and Admin Approvals)
+    match /merchants/{merchantId} {
+      allow get, list: if true; // Public directory for affiliates to discover merchants & products
+      allow create, update: if isValidId(merchantId);
+      allow delete: if isAdmin();
+    }
+
+    // Affiliates / Promoters collection
+    match /affiliates/{affiliateId} {
+      allow get: if isValidId(affiliateId) && (isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || affiliateId == request.auth.uid)));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(affiliateId) && isSignedIn();
+      allow update: if isValidId(affiliateId) && (isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || affiliateId == request.auth.uid || !('userId' in resource.data))));
+      allow delete: if isAdmin();
+    }
+
+    // Campaigns collection
+    match /campaigns/{campaignId} {
+      allow get, list: if true;
+      allow create: if isValidId(campaignId) && isSignedIn();
+      allow update: if isValidId(campaignId) && isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Waitlist collection (public registration with duplicate email verification)
+    match /waitlist/{entryId} {
+      allow read, create: if true;
+      allow update, delete: if isAdmin();
+    }
+  }
+}
